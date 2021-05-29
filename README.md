@@ -15,7 +15,8 @@
 * 각 요구사항을 구현하는 것이 중요한 것이 아니라 구현 과정을 통해 학습한 내용을 인식하는 것이 배움에 중요하다. 
 
 ### 요구사항 1 - http://localhost:8080/index.html로 접속시 응답
-* 
+* InputStream은 byte기반이기 때문에 BufferedReader로 읽으려면 InputStreamReader로 변경해서 읽는다.
+* Files.readAllBytes로 해당 경로에 있는 파일의 전체 데이터를 읽어서 byte array로 리턴해준다.
 
 ### 요구사항 2 - get 방식으로 회원가입
 * 
