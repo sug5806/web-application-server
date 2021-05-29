@@ -1,13 +1,14 @@
 package util;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import util.HttpRequestUtils.Pair;
 
 import java.util.Map;
 
-import org.junit.Test;
-
-import util.HttpRequestUtils.Pair;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpRequestUtilsTest {
     @Test
@@ -69,5 +70,13 @@ public class HttpRequestUtilsTest {
         String header = "Content-Length: 59";
         Pair pair = HttpRequestUtils.parseHeader(header);
         assertThat(pair, is(new Pair("Content-Length", "59")));
+    }
+
+    @Test
+    public void getQueryParameter() {
+        String path = "/user/create?userId=hose&password=password&name=gidong&email=hose%40naver.com";
+
+        String queryString = HttpRequestUtils.getQueryString(path);
+        assertEquals("userId=hose&password=password&name=gidong&email=hose%40naver.com", queryString);
     }
 }

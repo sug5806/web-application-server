@@ -25,6 +25,14 @@ public class HttpRequestUtils {
         return path;
     }
 
+    public static String getQueryString(String path) {
+        int index = path.indexOf("?");
+
+        String queryString = path.substring(index + 1);
+
+        return queryString;
+    }
+
     /**
      * @param queryString은 URL에서 ? 이후에 전달되는 field1=value1&field2=value2 형식임
      * @return
