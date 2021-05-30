@@ -1,5 +1,6 @@
 package webserver;
 
+import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,9 +51,21 @@ public class RequestHandler extends Thread {
                     User user = new User(map.get("userId"), map.get("password"), map.get("name"), map.get("email"));
                     log.debug("request body : {}", requestBody);
                     log.debug("user : {}", user);
+                    DataBase.addUser(user);
 
                     DataOutputStream dos = new DataOutputStream(out);
                     response302Header(dos, "/index.html");
+                } else if (url.startsWith("/user/login")) {
+                    String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
+                    Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
+
+                    DataOutputStream dos = new DataOutputStream(out);
+                    User user = DataBase.findUserById(map.get("userId"));
+                    if (user.getPassword().equals(map.get("password"))) {
+                        responseLoginSuccessHeader(dos);
+                    } else {
+                        responseLoginFailHeader(dos);
+                    }
                 }
             } else {
                 DataOutputStream dos = new DataOutputStream(out);
@@ -72,6 +85,28 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void responseLoginSuccessHeader(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Set-Cookie: logined=true\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void responseLoginFailHeader(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Set-Cookie: logined=false\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
