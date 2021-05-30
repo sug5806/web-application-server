@@ -47,24 +47,32 @@ public class RequestHandler extends Thread {
                 if (url.startsWith("/user/create")) {
                     String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
                     Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
-
                     User user = new User(map.get("userId"), map.get("password"), map.get("name"), map.get("email"));
+
                     log.debug("request body : {}", requestBody);
                     log.debug("user : {}", user);
                     DataBase.addUser(user);
 
                     DataOutputStream dos = new DataOutputStream(out);
                     response302Header(dos, "/index.html");
-                } else if (url.startsWith("/user/login")) {
+                } else if (url.equals("/user/login")) {
                     String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
                     Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
+                    User user = DataBase.findUserById(map.get("userId"));
 
                     DataOutputStream dos = new DataOutputStream(out);
-                    User user = DataBase.findUserById(map.get("userId"));
+                    if (user == null) {
+                        log.error("user not found!");
+                        response302Header(dos, "/index.html");
+                        return;
+                    }
+
                     if (user.getPassword().equals(map.get("password"))) {
-                        responseLoginSuccessHeader(dos);
+                        log.error("password success!");
+                        response200HeaderWithCookie(dos, "logined=true");
                     } else {
-                        responseLoginFailHeader(dos);
+                        log.error("password mismatch!");
+                        response302Header(dos, "/index.html");
                     }
                 }
             } else {
@@ -91,22 +99,11 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void responseLoginSuccessHeader(DataOutputStream dos) {
+    private void response200HeaderWithCookie(DataOutputStream dos, String cookie) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Set-Cookie: logined=true\r\n");
-            dos.writeBytes("\r\n");
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-    }
-
-    private void responseLoginFailHeader(DataOutputStream dos) {
-        try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
-            dos.writeBytes("Set-Cookie: logined=false\r\n");
+            dos.writeBytes("Set-Cookie: " + cookie + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
