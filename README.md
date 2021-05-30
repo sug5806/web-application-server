@@ -30,7 +30,7 @@
 * 302는 Location만 넘겨주면 되므로 body나 content-length같은 값을 주지 않아도 된다.
 
 ### 요구사항 5 - cookie
-* 
+* 로그인이 성공하면 cookie에 값을 넣어 로그인성공을 알려준다.
 
 ### 요구사항 6 - stylesheet 적용
 * 
