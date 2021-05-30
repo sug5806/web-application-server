@@ -12,13 +12,26 @@ import java.util.stream.Collectors;
 public class HttpRequestUtils {
     private static final Logger log = LoggerFactory.getLogger(HttpRequestUtils.class);
 
+    public static String getMethod(String firstLine) {
+        String[] values = firstLine.split(" ");
+        if (values.length < 3) {
+            throw new IllegalArgumentException();
+        }
+
+        String method = values[0];
+
+        log.debug("http method : {}", method);
+
+        return method;
+    }
+
     public static String getUrl(String firstLine) {
         String[] values = firstLine.split(" ");
         if (values.length < 3) {
             throw new IllegalArgumentException();
         }
 
-        String path = firstLine.split(" ")[1];
+        String path = values[1];
 
         log.debug("request path : {}", path);
 
@@ -42,8 +55,7 @@ public class HttpRequestUtils {
     }
 
     /**
-     * @param 쿠키
-     *            값은 name1=value1; name2=value2 형식임
+     * @param 쿠키 값은 name1=value1; name2=value2 형식임
      * @return
      */
     public static Map<String, String> parseCookies(String cookies) {
@@ -75,6 +87,17 @@ public class HttpRequestUtils {
 
     public static Pair parseHeader(String header) {
         return getKeyValue(header, ": ");
+    }
+
+    public static boolean isContentLength(String line) {
+        String[] split = line.split(":");
+        return split[0].equals("Content-Length");
+
+    }
+
+    public static int getContentLength(String line) {
+        String[] split = line.split(":");
+        return Integer.parseInt(split[1].trim());
     }
 
     public static class Pair {

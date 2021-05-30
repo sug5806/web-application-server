@@ -19,10 +19,11 @@
 * Files.readAllBytes로 해당 경로에 있는 파일의 전체 데이터를 읽어서 byte array로 리턴해준다.
 
 ### 요구사항 2 - get 방식으로 회원가입
-* 
+* 처음에 ?로 파싱하고 그 다음 &으로 파싱, 그다음 =으로 파싱을 총 3번한다.
 
 ### 요구사항 3 - post 방식으로 회원가입
-* 
+
+* RequestBody는 IOUtils.readData로 읽을 수 있다.
 
 ### 요구사항 4 - redirect 방식으로 이동
 * 

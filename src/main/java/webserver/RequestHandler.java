@@ -4,6 +4,7 @@ import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 import java.io.*;
 import java.net.Socket;
@@ -29,22 +30,36 @@ public class RequestHandler extends Thread {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
             String line = bufferedReader.readLine();
-
             log.debug("request line {}", line);
 
             if (line == null) {
                 return;
             }
 
+            String method = HttpRequestUtils.getMethod(line);
             String url = HttpRequestUtils.getUrl(line);
 
-            if (url.startsWith("/user/create")) {
-                String queryString = HttpRequestUtils.getQueryString(url);
-                Map<String, String> map = HttpRequestUtils.parseQueryString(queryString);
-                User user = new User(map.get("userId"), map.get("password"), map.get("name"), map.get("email"));
-                log.debug("user : {}", user);
+            if (method.equals("POST")) {
+                if (url.startsWith("/user/create")) {
+                    int contentLength = 0;
 
-                url = "index.html";
+                    while (!line.equals("")) {
+                        line = bufferedReader.readLine();
+                        log.debug("header : {}", line);
+
+                        if (HttpRequestUtils.isContentLength(line)) {
+                            contentLength = HttpRequestUtils.getContentLength(line);
+                        }
+                    }
+
+                    String requestBody = IOUtils.readData(bufferedReader, contentLength);
+
+                    Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
+
+                    User user = new User(map.get("userId"), map.get("password"), map.get("name"), map.get("email"));
+                    log.debug("request body : {}", requestBody);
+                    log.debug("user : {}", user);
+                }
             }
 
             DataOutputStream dos = new DataOutputStream(out);
