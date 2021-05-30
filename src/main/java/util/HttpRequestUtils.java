@@ -5,7 +5,10 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -98,6 +101,26 @@ public class HttpRequestUtils {
     public static int getContentLength(String line) {
         String[] split = line.split(":");
         return Integer.parseInt(split[1].trim());
+    }
+
+    public static HashMap<String, String> getHeaders(BufferedReader br) {
+        HashMap<String, String> headers = new HashMap<>();
+        try {
+            String line = br.readLine();
+            while (!line.equals("")) {
+                Pair pair = parseHeader(line);
+                headers.put(pair.key, pair.value);
+                log.debug("headers : {} {}", pair.key, pair.value);
+
+                line = br.readLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return headers;
+
     }
 
     public static class Pair {

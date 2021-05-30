@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RequestHandler extends Thread {
@@ -39,33 +40,28 @@ public class RequestHandler extends Thread {
             String method = HttpRequestUtils.getMethod(line);
             String url = HttpRequestUtils.getUrl(line);
 
+            HashMap<String, String> headers = HttpRequestUtils.getHeaders(bufferedReader);
+
             if (method.equals("POST")) {
                 if (url.startsWith("/user/create")) {
-                    int contentLength = 0;
-
-                    while (!line.equals("")) {
-                        line = bufferedReader.readLine();
-                        log.debug("header : {}", line);
-
-                        if (HttpRequestUtils.isContentLength(line)) {
-                            contentLength = HttpRequestUtils.getContentLength(line);
-                        }
-                    }
-
-                    String requestBody = IOUtils.readData(bufferedReader, contentLength);
-
+                    String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
                     Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
 
                     User user = new User(map.get("userId"), map.get("password"), map.get("name"), map.get("email"));
                     log.debug("request body : {}", requestBody);
                     log.debug("user : {}", user);
+
+                    DataOutputStream dos = new DataOutputStream(out);
+                    response302Header(dos, "/index.html");
                 }
+            } else {
+                DataOutputStream dos = new DataOutputStream(out);
+                byte[] body = Files.readAllBytes(new File("./webapp/" + url).toPath());
+                response200Header(dos, body.length);
+                responseBody(dos, body);
             }
 
-            DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = Files.readAllBytes(new File("./webapp/" + url).toPath());
-            response200Header(dos, body.length);
-            responseBody(dos, body);
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -76,6 +72,16 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302Header(DataOutputStream dos, String targetUrl) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: " + targetUrl + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());

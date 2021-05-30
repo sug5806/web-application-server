@@ -23,10 +23,11 @@
 
 ### 요구사항 3 - post 방식으로 회원가입
 
-* RequestBody는 IOUtils.readData로 읽을 수 있다.
+* RequestBody는 헤더를 다읽고 난후 공백 이후에 content-length만큼 읽으면 된다.
 
 ### 요구사항 4 - redirect 방식으로 이동
-* 
+
+* 302는 Location만 넘겨주면 되므로 body나 content-length같은 값을 주지 않아도 된다.
 
 ### 요구사항 5 - cookie
 * 
