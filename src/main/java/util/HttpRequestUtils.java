@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class HttpRequestUtils {
@@ -44,9 +45,7 @@ public class HttpRequestUtils {
     public static String getQueryString(String path) {
         int index = path.indexOf("?");
 
-        String queryString = path.substring(index + 1);
-
-        return queryString;
+        return path.substring(index + 1);
     }
 
     /**
@@ -71,8 +70,8 @@ public class HttpRequestUtils {
         }
 
         String[] tokens = values.split(separator);
-        return Arrays.stream(tokens).map(t -> getKeyValue(t, "=")).filter(p -> p != null)
-                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+        return Arrays.stream(tokens).map(t -> getKeyValue(t, "=")).filter(Objects::nonNull)
+                .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     static Pair getKeyValue(String keyValue, String regex) {
@@ -92,28 +91,21 @@ public class HttpRequestUtils {
         return getKeyValue(header, ": ");
     }
 
-    public static boolean isContentLength(String line) {
-        String[] split = line.split(":");
-        return split[0].equals("Content-Length");
-
-    }
-
-    public static int getContentLength(String line) {
-        String[] split = line.split(":");
-        return Integer.parseInt(split[1].trim());
-    }
 
     public static HashMap<String, String> getHeaders(BufferedReader br) {
         HashMap<String, String> headers = new HashMap<>();
         try {
             String line = br.readLine();
             while (!line.equals("")) {
+                log.debug("headers : {}", line);
                 Pair pair = parseHeader(line);
                 headers.put(pair.key, pair.value);
-                log.debug("headers : {} {}", pair.key, pair.value);
-
                 line = br.readLine();
             }
+
+            Map<String, String> cookie = HttpRequestUtils.parseCookies(headers.get("Cookie"));
+            headers.put("logined", cookie.get("logined"));
+            log.debug("logined : {}", cookie.get("logined"));
 
         } catch (IOException e) {
             e.printStackTrace();

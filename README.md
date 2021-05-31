@@ -30,10 +30,18 @@
 * 302는 Location만 넘겨주면 되므로 body나 content-length같은 값을 주지 않아도 된다.
 
 ### 요구사항 5 - cookie
+
 * 로그인이 성공하면 cookie에 값을 넣어 로그인성공을 알려준다.
 
-### 요구사항 6 - stylesheet 적용
-* 
+### 요구사항 6 - 사용자 목록 적용
+
+* cookie에서 로그인 여부를 확인 한다.
+* response body에 html을 넣어주어 동적으로 데이터를 만든다.
+
+### 요구사항 7 - CSS 지원
+
+*
 
 ### heroku 서버에 배포 후
+
 * 

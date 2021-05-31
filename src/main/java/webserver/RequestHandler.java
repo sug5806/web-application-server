@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +44,8 @@ public class RequestHandler extends Thread {
 
             HashMap<String, String> headers = HttpRequestUtils.getHeaders(bufferedReader);
 
+            DataOutputStream dos = new DataOutputStream(out);
+
             if (method.equals("POST")) {
                 if (url.startsWith("/user/create")) {
                     String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
@@ -53,14 +56,13 @@ public class RequestHandler extends Thread {
                     log.debug("user : {}", user);
                     DataBase.addUser(user);
 
-                    DataOutputStream dos = new DataOutputStream(out);
                     response302Header(dos, "/index.html");
                 } else if (url.equals("/user/login")) {
                     String requestBody = IOUtils.readData(bufferedReader, Integer.parseInt(headers.get("Content-Length")));
                     Map<String, String> map = HttpRequestUtils.parseQueryString(requestBody);
                     User user = DataBase.findUserById(map.get("userId"));
 
-                    DataOutputStream dos = new DataOutputStream(out);
+
                     if (user == null) {
                         log.error("user not found!");
                         response302Header(dos, "/index.html");
@@ -69,14 +71,44 @@ public class RequestHandler extends Thread {
 
                     if (user.getPassword().equals(map.get("password"))) {
                         log.error("password success!");
-                        response200HeaderWithCookie(dos, "logined=true");
+                        response302LoginSuccessHeader(dos);
                     } else {
                         log.error("password mismatch!");
                         response302Header(dos, "/index.html");
                     }
                 }
             } else {
-                DataOutputStream dos = new DataOutputStream(out);
+                if (url.equals("/user/list")) {
+                    boolean logined = Boolean.parseBoolean(headers.get("logined"));
+                    if (logined) {
+                        Collection<User> all = DataBase.findAll();
+                        log.debug("all users : {}", all);
+
+                        StringBuilder sb = new StringBuilder();
+
+                        sb.append("<table>");
+
+                        for (User user : all) {
+                            sb.append("<tr>");
+                            sb.append("<td>").append(user.getUserId()).append("</td>");
+                            sb.append("<td>").append(user.getName()).append("</td>");
+                            sb.append("<td>").append(user.getEmail()).append("</td>");
+                            sb.append("</tr>");
+                        }
+
+                        sb.append("</table>");
+
+                        byte[] body = sb.toString().getBytes();
+                        response200Header(dos, body.length);
+                        responseBody(dos, body);
+                        return;
+                    } else {
+                        response302Header(dos, "/index.html");
+                        return;
+                    }
+                }
+
+//                DataOutputStream dos = new DataOutputStream(out);
                 byte[] body = Files.readAllBytes(new File("./webapp/" + url).toPath());
                 response200Header(dos, body.length);
                 responseBody(dos, body);
@@ -114,6 +146,17 @@ public class RequestHandler extends Thread {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
             dos.writeBytes("Location: " + targetUrl + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302LoginSuccessHeader(DataOutputStream dos) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Set-Cookie: logined=true\r\n");
+            dos.writeBytes("Location: /index.html\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
